@@ -36,3 +36,4 @@ prisma/migrations/
 
 # debug
 npm-debug.log*
+.vercel
