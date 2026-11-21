@@ -34,6 +34,13 @@ Thumbs.db
 # prisma
 prisma/migrations/
 
+# build artifacts
+tsconfig.tsbuildinfo
+
 # debug
 npm-debug.log*
 .vercel
+.env*
+
+# ww-scraper browser session (local Chrome profile)
+ww-scraper/.browser-session/

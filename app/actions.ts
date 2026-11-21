@@ -10,6 +10,12 @@ import {
   updatePrice as storeUpdatePrice,
   upsertProduct as storeUpsert,
   deleteProduct as storeDelete,
+  getMembers as storeGetMembers,
+  upsertMember as storeUpsertMember,
+  deleteMember as storeDeleteMember,
+  getTransactions as storeGetTransactions,
+  upsertTransaction as storeUpsertTransaction,
+  deleteTransaction as storeDeleteTransaction,
 } from '@/lib/store'
 
 export async function verifyStaffPin(pin: string) {
@@ -127,6 +133,114 @@ export async function upsertProduct(data: ProductFormData) {
   } catch (error) {
     console.error('Failed to upsert product:', error)
     return { success: false, error: 'Database error or duplicate slug' }
+  }
+}
+
+// ─── Members (Weed Walker Legacy) ───
+
+export async function getMembers() {
+  if (usingFallback()) {
+    return storeGetMembers()
+  }
+  try {
+    return await prisma.member.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { transactions: true },
+    })
+  } catch (error) {
+    console.error('Failed to fetch members:', error)
+    return storeGetMembers()
+  }
+}
+
+export async function upsertMember(data: any) {
+  if (usingFallback()) {
+    const res = await storeUpsertMember(data)
+    revalidatePath('/staff')
+    return res
+  }
+  try {
+    const { id, ...payload } = data
+    if (id) {
+      await prisma.member.update({ where: { id }, data: payload })
+    } else {
+      await prisma.member.create({ data: payload })
+    }
+    revalidatePath('/staff')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to upsert member:', error)
+    return { success: false, error: 'Database error' }
+  }
+}
+
+export async function deleteMember(id: string) {
+  if (usingFallback()) {
+    const res = await storeDeleteMember(id)
+    revalidatePath('/staff')
+    return res
+  }
+  try {
+    await prisma.member.delete({ where: { id } })
+    revalidatePath('/staff')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to delete member:', error)
+    return { success: false, error: 'Database error' }
+  }
+}
+
+// ─── Transactions (Weed Walker Legacy) ───
+
+export async function getTransactions() {
+  if (usingFallback()) {
+    return storeGetTransactions()
+  }
+  try {
+    return await prisma.transaction.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { member: true },
+    })
+  } catch (error) {
+    console.error('Failed to fetch transactions:', error)
+    return storeGetTransactions()
+  }
+}
+
+export async function upsertTransaction(data: any) {
+  if (usingFallback()) {
+    const res = await storeUpsertTransaction(data)
+    revalidatePath('/staff')
+    return res
+  }
+  try {
+    const { id, ...payload } = data
+    if (id) {
+      await prisma.transaction.update({ where: { id }, data: payload })
+    } else {
+      await prisma.transaction.create({ data: payload })
+    }
+    revalidatePath('/staff')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to upsert transaction:', error)
+    return { success: false, error: 'Database error' }
+  }
+}
+
+export async function deleteTransaction(id: string) {
+  if (usingFallback()) {
+    const res = await storeDeleteTransaction(id)
+    revalidatePath('/staff')
+    return res
+  }
+  try {
+    await prisma.transaction.delete({ where: { id } })
+    revalidatePath('/staff')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to delete transaction:', error)
+    return { success: false, error: 'Database error' }
   }
 }
 

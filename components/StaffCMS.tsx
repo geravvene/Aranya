@@ -2,13 +2,16 @@
 
 import React, { useState } from 'react'
 import { dict, Language } from '@/lib/i18n'
-import { 
-  verifyStaffPin, logoutStaff, toggleProductAvailability, 
-  updateProductPrice, upsertProduct, deleteProduct, ProductFormData 
+import {
+  verifyStaffPin, logoutStaff, toggleProductAvailability,
+  updateProductPrice, upsertProduct, deleteProduct, ProductFormData,
+  getMembers, upsertMember, deleteMember,
+  getTransactions, upsertTransaction, deleteTransaction,
 } from '@/app/actions'
-import { 
-  Lock, Unlock, Search, Plus, Edit3, Trash2, Check, X, 
-  Globe, ShieldCheck, Leaf, ArrowLeft, AlertCircle, Tablet, Sparkles 
+import {
+  Lock, Unlock, Search, Plus, Edit3, Trash2, Check, X,
+  Globe, ShieldCheck, Leaf, ArrowLeft, AlertCircle, Tablet, Sparkles,
+  Users, Receipt, UserPlus, Phone, Mail, Calendar, DollarSign, Award,
 } from 'lucide-react'
 
 interface Category {
@@ -41,17 +44,53 @@ interface Product {
   terpenesNote?: string | null
 }
 
+interface Member {
+  id: string
+  name: string
+  channel: string | null
+  dob: string | null
+  phone: string | null
+  email: string | null
+  firstVisit: string | null
+  lastVisit: string | null
+  points: number
+  tier: string
+  notes: string | null
+  syncedAt: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface Transaction {
+  id: string
+  txDate: string
+  memberId: string | null
+  memberName: string
+  receiptNumber: string
+  status: string | null
+  amount: number
+  pointsEarned: number
+  txType: string | null
+  syncedAt: string
+  createdAt: Date
+}
+
+type StaffTab = 'products' | 'members' | 'transactions'
+
 interface StaffCMSProps {
   categories: Category[]
   initialProducts: Product[]
+  initialMembers?: Member[]
+  initialTransactions?: Transaction[]
   isAuthenticated: boolean
 }
 
-export default function StaffCMS({ categories, initialProducts, isAuthenticated: serverAuth }: StaffCMSProps) {
+export default function StaffCMS({ categories, initialProducts, initialMembers = [], initialTransactions = [], isAuthenticated: serverAuth }: StaffCMSProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(serverAuth)
   const [pinInput, setPinInput] = useState('')
   const [pinError, setPinError] = useState(false)
   const [lang, setLang] = useState<Language>('en')
+  const [activeTab, setActiveTab] = useState<StaffTab>('products')
   const [searchQuery, setSearchQuery] = useState('')
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null)
   const [tempPrice, setTempPrice] = useState('')
@@ -59,6 +98,14 @@ export default function StaffCMS({ categories, initialProducts, isAuthenticated:
   const [currentProduct, setCurrentProduct] = useState<Partial<Product> | null>(null)
   const [loading, setLoading] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
+
+  // Members & Transactions state
+  const [members, setMembers] = useState<Member[]>(initialMembers)
+  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions)
+  const [memberModal, setMemberModal] = useState(false)
+  const [currentMember, setCurrentMember] = useState<Partial<Member> | null>(null)
+  const [txModal, setTxModal] = useState(false)
+  const [currentTx, setCurrentTx] = useState<Partial<Transaction> | null>(null)
 
   const t = dict[lang]
 
@@ -260,8 +307,53 @@ export default function StaffCMS({ categories, initialProducts, isAuthenticated:
         </div>
       </header>
 
+      {/* Tab Navigation */}
+      <div className="relative z-10 flex items-center gap-1 px-6 pt-2 pb-0">
+        <button
+          onClick={() => setActiveTab('products')}
+          className={`px-4 py-2 rounded-t-xl text-xs font-medium transition flex items-center gap-2 ${
+            activeTab === 'products'
+              ? 'bg-jade/15 border border-jade/40 border-b-0 text-jade font-semibold'
+              : 'text-sage hover:text-cream hover:bg-surface-light/30'
+          }`}
+        >
+          <Leaf className="w-3.5 h-3.5" />
+          <span>{lang === 'en' ? 'Products' : 'สินค้า'}</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('members')}
+          className={`px-4 py-2 rounded-t-xl text-xs font-medium transition flex items-center gap-2 ${
+            activeTab === 'members'
+              ? 'bg-jade/15 border border-jade/40 border-b-0 text-jade font-semibold'
+              : 'text-sage hover:text-cream hover:bg-surface-light/30'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span>{lang === 'en' ? 'Members' : 'สมาชิก'}</span>
+          {members.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full bg-jade/20 text-[10px] text-jade">{members.length}</span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('transactions')}
+          className={`px-4 py-2 rounded-t-xl text-xs font-medium transition flex items-center gap-2 ${
+            activeTab === 'transactions'
+              ? 'bg-jade/15 border border-jade/40 border-b-0 text-jade font-semibold'
+              : 'text-sage hover:text-cream hover:bg-surface-light/30'
+          }`}
+        >
+          <Receipt className="w-3.5 h-3.5" />
+          <span>{lang === 'en' ? 'Transactions' : 'รายการขาย'}</span>
+          {transactions.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full bg-jade/20 text-[10px] text-jade">{transactions.length}</span>
+          )}
+        </button>
+      </div>
+
       {/* Main Content */}
       <main className="relative z-10 flex-1 p-6 overflow-y-auto flex flex-col">
+        {activeTab === 'products' && (
+        <>
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-6">
           <div className="relative w-full sm:w-96">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sage" />
@@ -391,6 +483,186 @@ export default function StaffCMS({ categories, initialProducts, isAuthenticated:
             </table>
           </div>
         </div>
+        </>
+        )}
+
+        {/* ─── Members Tab ─── */}
+        {activeTab === 'members' && (
+          <div className="flex flex-col gap-4 flex-1">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold font-serif text-cream flex items-center gap-2">
+                <Users className="w-4 h-4 text-jade" />
+                {lang === 'en' ? 'Weed Walker Members' : 'สมาชิก Weed Walker'}
+                <span className="text-[10px] text-sage font-normal">({members.length} total)</span>
+              </h3>
+              <button
+                onClick={() => {
+                  setCurrentMember({ tier: 'bronze', points: 0 })
+                  setMemberModal(true)
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-jade hover:bg-jade-dark text-obsidian font-bold text-xs shadow-lg shadow-jade/20 transition"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>{lang === 'en' ? 'Add Member' : 'เพิ่มสมาชิก'}</span>
+              </button>
+            </div>
+
+            <div className="glass-panel rounded-3xl border border-border overflow-hidden shadow-xl flex-1 flex flex-col">
+              <div className="overflow-x-auto flex-1">
+                {members.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-sage">
+                    <Users className="w-12 h-12 mb-3 opacity-30" />
+                    <p className="text-sm font-medium">{lang === 'en' ? 'No members imported yet' : 'ยังไม่มีสมาชิก'}</p>
+                    <p className="text-[10px] mt-1">{lang === 'en' ? 'Run the import script or add manually' : 'รันสคริปต์นำเข้าหรือเพิ่มด้วยตนเอง'}</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-left border-collapse text-xs text-sage">
+                    <thead className="bg-obsidian/80 border-b border-border uppercase text-[10px] tracking-wider text-sage sticky top-0">
+                      <tr>
+                        <th className="py-3 px-4">{lang === 'en' ? 'Name' : 'ชื่อ'}</th>
+                        <th className="py-3 px-4"><Phone className="w-3 h-3 inline" /> {lang === 'en' ? 'Phone' : 'เบอร์โทร'}</th>
+                        <th className="py-3 px-4"><Mail className="w-3 h-3 inline" /> {lang === 'en' ? 'Email' : 'อีเมล'}</th>
+                        <th className="py-3 px-4"><Award className="w-3 h-3 inline" /> {lang === 'en' ? 'Tier' : 'ระดับ'}</th>
+                        <th className="py-3 px-4"><DollarSign className="w-3 h-3 inline" /> {lang === 'en' ? 'Points' : 'คะแนน'}</th>
+                        <th className="py-3 px-4"><Calendar className="w-3 h-3 inline" /> {lang === 'en' ? 'Last Visit' : 'มาล่าสุด'}</th>
+                        <th className="py-3 px-4 text-right">{lang === 'en' ? 'Actions' : 'จัดการ'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {members.map(m => (
+                        <tr key={m.id} className="hover:bg-surface-light/40 transition">
+                          <td className="py-2.5 px-4 font-semibold text-cream">{m.name}</td>
+                          <td className="py-2.5 px-4">{m.phone || '—'}</td>
+                          <td className="py-2.5 px-4 text-[10px]">{m.email || '—'}</td>
+                          <td className="py-2.5 px-4">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              m.tier === 'platinum' ? 'bg-purple-500/20 text-purple-300' :
+                              m.tier === 'gold' ? 'bg-champagne/20 text-champagne' :
+                              m.tier === 'silver' ? 'bg-gray-400/20 text-gray-300' :
+                              'bg-amber-600/20 text-amber-300'
+                            }`}>
+                              {m.tier}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-4 font-semibold text-champagne">{m.points.toLocaleString()}</td>
+                          <td className="py-2.5 px-4 text-[10px]">{m.lastVisit ? new Date(m.lastVisit).toLocaleDateString() : '—'}</td>
+                          <td className="py-2.5 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={async () => {
+                                  setCurrentMember(m)
+                                  setMemberModal(true)
+                                }}
+                                className="p-1.5 rounded-lg bg-obsidian border border-border hover:border-jade text-sage hover:text-cream transition"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (confirm(lang === 'en' ? 'Delete this member?' : 'ลบสมาชิกนี้?')) {
+                                    await deleteMember(m.id)
+                                    setMembers(prev => prev.filter(x => x.id !== m.id))
+                                    triggerToast(lang === 'en' ? 'Member deleted' : 'ลบสมาชิกแล้ว')
+                                  }
+                                }}
+                                className="p-1.5 rounded-lg bg-obsidian border border-border hover:border-red-500 text-sage hover:text-red-400 transition"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Transactions Tab ─── */}
+        {activeTab === 'transactions' && (
+          <div className="flex flex-col gap-4 flex-1">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold font-serif text-cream flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-jade" />
+                {lang === 'en' ? 'Transaction History' : 'ประวัติการขาย'}
+                <span className="text-[10px] text-sage font-normal">({transactions.length} total)</span>
+              </h3>
+              <button
+                onClick={() => {
+                  setCurrentTx({ status: 'completed', txType: 'sale', amount: 0, pointsEarned: 0 })
+                  setTxModal(true)
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-jade hover:bg-jade-dark text-obsidian font-bold text-xs shadow-lg shadow-jade/20 transition"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{lang === 'en' ? 'Add Transaction' : 'เพิ่มรายการ'}</span>
+              </button>
+            </div>
+
+            <div className="glass-panel rounded-3xl border border-border overflow-hidden shadow-xl flex-1 flex flex-col">
+              <div className="overflow-x-auto flex-1">
+                {transactions.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-sage">
+                    <Receipt className="w-12 h-12 mb-3 opacity-30" />
+                    <p className="text-sm font-medium">{lang === 'en' ? 'No transactions yet' : 'ยังไม่มีรายการขาย'}</p>
+                    <p className="text-[10px] mt-1">{lang === 'en' ? 'Import from Silompos or add manually' : 'นำเข้าจาก Silompos หรือเพิ่มด้วยตนเอง'}</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-left border-collapse text-xs text-sage">
+                    <thead className="bg-obsidian/80 border-b border-border uppercase text-[10px] tracking-wider text-sage sticky top-0">
+                      <tr>
+                        <th className="py-3 px-4">{lang === 'en' ? 'Date' : 'วันที่'}</th>
+                        <th className="py-3 px-4">{lang === 'en' ? 'Receipt' : 'ใบเสร็จ'}</th>
+                        <th className="py-3 px-4">{lang === 'en' ? 'Customer' : 'ลูกค้า'}</th>
+                        <th className="py-3 px-4">{lang === 'en' ? 'Type' : 'ประเภท'}</th>
+                        <th className="py-3 px-4 text-right">{lang === 'en' ? 'Amount' : 'ยอดเงิน'}</th>
+                        <th className="py-3 px-4 text-right">{lang === 'en' ? 'Points' : 'คะแนน'}</th>
+                        <th className="py-3 px-4 text-right">{lang === 'en' ? 'Actions' : 'จัดการ'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {transactions.map(tx => (
+                        <tr key={tx.id} className="hover:bg-surface-light/40 transition">
+                          <td className="py-2.5 px-4 text-[10px]">{new Date(tx.txDate).toLocaleDateString()}</td>
+                          <td className="py-2.5 px-4 font-mono text-[10px] text-champagne">{tx.receiptNumber}</td>
+                          <td className="py-2.5 px-4 font-semibold text-cream">{tx.memberName}</td>
+                          <td className="py-2.5 px-4">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              tx.txType === 'sale' ? 'bg-jade/20 text-jade' :
+                              tx.txType === 'return' ? 'bg-red-500/20 text-red-400' :
+                              'bg-blue-500/20 text-blue-300'
+                            }`}>
+                              {tx.txType}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-4 text-right font-semibold text-champagne">฿{tx.amount.toLocaleString()}</td>
+                          <td className="py-2.5 px-4 text-right">+{tx.pointsEarned}</td>
+                          <td className="py-2.5 px-4 text-right">
+                            <button
+                              onClick={async () => {
+                                if (confirm(lang === 'en' ? 'Delete this transaction?' : 'ลบรายการนี้?')) {
+                                  await deleteTransaction(tx.id)
+                                  setTransactions(prev => prev.filter(x => x.id !== tx.id))
+                                  triggerToast(lang === 'en' ? 'Transaction deleted' : 'ลบรายการแล้ว')
+                                }
+                              }}
+                              className="p-1.5 rounded-lg bg-obsidian border border-border hover:border-red-500 text-sage hover:text-red-400 transition"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Product Create / Edit Modal */}
@@ -528,6 +800,143 @@ export default function StaffCMS({ categories, initialProducts, isAuthenticated:
                 >
                   {t.save}
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Member Modal ─── */}
+      {memberModal && currentMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/90 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="max-w-lg w-full glass-panel p-6 rounded-3xl border border-border shadow-2xl my-8">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+              <h3 className="text-base font-bold font-serif text-cream flex items-center gap-2">
+                <Users className="w-4 h-4 text-jade" />
+                {currentMember.id ? (lang === 'en' ? 'Edit Member' : 'แก้ไขสมาชิก') : (lang === 'en' ? 'Add Member' : 'เพิ่มสมาชิก')}
+              </h3>
+              <button onClick={() => setMemberModal(false)} className="w-8 h-8 rounded-full bg-obsidian border border-border flex items-center justify-center text-sage hover:text-cream">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              if (!currentMember.name) return
+              const res = await upsertMember(currentMember)
+              if (res.success) {
+                const fresh = await getMembers()
+                setMembers(fresh as any)
+                setMemberModal(false)
+                setCurrentMember(null)
+                triggerToast(lang === 'en' ? 'Member saved' : 'บันทึกสมาชิกแล้ว')
+              }
+            }} className="space-y-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-sage mb-1">{lang === 'en' ? 'Name *' : 'ชื่อ *'}</label>
+                  <input required type="text" value={currentMember.name || ''} onChange={e => setCurrentMember({...currentMember, name: e.target.value})} className="w-full bg-obsidian border border-border rounded-xl px-3 py-2 text-cream focus:outline-none focus:border-jade" />
+                </div>
+                <div>
+                  <label className="block font-semibold text-sage mb-1">{lang === 'en' ? 'Phone' : 'เบอร์โทร'}</label>
+                  <input type="text" value={currentMember.phone || ''} onChange={e => setCurrentMember({...currentMember, phone: e.target.value})} className="w-full bg-obsidian border border-border rounded-xl px-3 py-2 text-cream focus:outline-none focus:border-jade" />
+                </div>
+                <div>
+                  <label className="block font-semibold text-sage mb-1">{lang === 'en' ? 'Email' : 'อีเมล'}</label>
+                  <input type="email" value={currentMember.email || ''} onChange={e => setCurrentMember({...currentMember, email: e.target.value})} className="w-full bg-obsidian border border-border rounded-xl px-3 py-2 text-cream focus:outline-none focus:border-jade" />
+                </div>
+                <div>
+                  <label className="block font-semibold text-sage mb-1">{lang === 'en' ? 'Tier' : 'ระดับ'}</label>
+                  <select value={currentMember.tier || 'bronze'} onChange={e => setCurrentMember({...currentMember, tier: e.target.value})} className="w-full bg-obsidian border border-border rounded-xl px-3 py-2 text-cream focus:outline-none focus:border-jade">
+                    <option value="bronze">Bronze</option>
+                    <option value="silver">Silver</option>
+                    <option value="gold">Gold</option>
+                    <option value="platinum">Platinum</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold text-sage mb-1">{lang === 'en' ? 'Points' : 'คะแนน'}</label>
+                  <input type="number" value={currentMember.points || 0} onChange={e => setCurrentMember({...currentMember, points: parseInt(e.target.value) || 0})} className="w-full bg-obsidian border border-border rounded-xl px-3 py-2 text-cream focus:outline-none focus:border-jade" />
+                </div>
+                <div>
+                  <label className="block font-semibold text-sage mb-1">{lang === 'en' ? 'Channel' : 'ช่องทาง'}</label>
+                  <input type="text" value={currentMember.channel || ''} onChange={e => setCurrentMember({...currentMember, channel: e.target.value})} className="w-full bg-obsidian border border-border rounded-xl px-3 py-2 text-cream focus:outline-none focus:border-jade" />
+                </div>
+              </div>
+              <div>
+                <label className="block font-semibold text-sage mb-1">{lang === 'en' ? 'Notes' : 'หมายเหตุ'}</label>
+                <textarea value={currentMember.notes || ''} onChange={e => setCurrentMember({...currentMember, notes: e.target.value})} rows={2} className="w-full bg-obsidian border border-border rounded-xl px-3 py-2 text-cream focus:outline-none focus:border-jade resize-none" />
+              </div>
+              <div className="pt-3 border-t border-border flex items-center justify-end gap-3">
+                <button type="button" onClick={() => setMemberModal(false)} className="px-4 py-2 rounded-xl bg-obsidian border border-border text-sage hover:text-cream font-medium transition">{t.cancel}</button>
+                <button type="submit" className="px-5 py-2 rounded-xl bg-jade hover:bg-jade-dark text-obsidian font-bold shadow-lg shadow-jade/20 transition">{t.save}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Transaction Modal ─── */}
+      {txModal && currentTx && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/90 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="max-w-lg w-full glass-panel p-6 rounded-3xl border border-border shadow-2xl my-8">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+              <h3 className="text-base font-bold font-serif text-cream flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-jade" />
+                {lang === 'en' ? 'Add Transaction' : 'เพิ่มรายการขาย'}
+              </h3>
+              <button onClick={() => setTxModal(false)} className="w-8 h-8 rounded-full bg-obsidian border border-border flex items-center justify-center text-sage hover:text-cream">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              if (!currentTx.memberName || !currentTx.receiptNumber) return
+              const res = await upsertTransaction(currentTx)
+              if (res.success) {
+                const fresh = await getTransactions()
+                setTransactions(fresh as any)
+                setTxModal(false)
+                setCurrentTx(null)
+                triggerToast(lang === 'en' ? 'Transaction saved' : 'บันทึกรายการแล้ว')
+              }
+            }} className="space-y-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-sage mb-1">{lang === 'en' ? 'Customer Name *' : 'ชื่อลูกค้า *'}</label>
+                  <input required type="text" value={currentTx.memberName || ''} onChange={e => setCurrentTx({...currentTx, memberName: e.target.value})} className="w-full bg-obsidian border border-border rounded-xl px-3 py-2 text-cream focus:outline-none focus:border-jade" />
+                </div>
+                <div>
+                  <label className="block font-semibold text-sage mb-1">{lang === 'en' ? 'Receipt # *' : 'เลขใบเสร็จ *'}</label>
+                  <input required type="text" value={currentTx.receiptNumber || ''} onChange={e => setCurrentTx({...currentTx, receiptNumber: e.target.value})} className="w-full bg-obsidian border border-border rounded-xl px-3 py-2 text-cream focus:outline-none focus:border-jade" />
+                </div>
+                <div>
+                  <label className="block font-semibold text-sage mb-1">{lang === 'en' ? 'Amount (THB)' : 'ยอดเงิน (บาท)'}</label>
+                  <input type="number" step="0.01" value={currentTx.amount || 0} onChange={e => setCurrentTx({...currentTx, amount: parseFloat(e.target.value) || 0})} className="w-full bg-obsidian border border-border rounded-xl px-3 py-2 text-cream focus:outline-none focus:border-jade" />
+                </div>
+                <div>
+                  <label className="block font-semibold text-sage mb-1">{lang === 'en' ? 'Points Earned' : 'คะแนนที่ได้รับ'}</label>
+                  <input type="number" value={currentTx.pointsEarned || 0} onChange={e => setCurrentTx({...currentTx, pointsEarned: parseInt(e.target.value) || 0})} className="w-full bg-obsidian border border-border rounded-xl px-3 py-2 text-cream focus:outline-none focus:border-jade" />
+                </div>
+                <div>
+                  <label className="block font-semibold text-sage mb-1">{lang === 'en' ? 'Type' : 'ประเภท'}</label>
+                  <select value={currentTx.txType || 'sale'} onChange={e => setCurrentTx({...currentTx, txType: e.target.value})} className="w-full bg-obsidian border border-border rounded-xl px-3 py-2 text-cream focus:outline-none focus:border-jade">
+                    <option value="sale">Sale</option>
+                    <option value="return">Return</option>
+                    <option value="redeem">Redeem</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold text-sage mb-1">{lang === 'en' ? 'Status' : 'สถานะ'}</label>
+                  <select value={currentTx.status || 'completed'} onChange={e => setCurrentTx({...currentTx, status: e.target.value})} className="w-full bg-obsidian border border-border rounded-xl px-3 py-2 text-cream focus:outline-none focus:border-jade">
+                    <option value="completed">Completed</option>
+                    <option value="pending">Pending</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+              <div className="pt-3 border-t border-border flex items-center justify-end gap-3">
+                <button type="button" onClick={() => setTxModal(false)} className="px-4 py-2 rounded-xl bg-obsidian border border-border text-sage hover:text-cream font-medium transition">{t.cancel}</button>
+                <button type="submit" className="px-5 py-2 rounded-xl bg-jade hover:bg-jade-dark text-obsidian font-bold shadow-lg shadow-jade/20 transition">{t.save}</button>
               </div>
             </form>
           </div>

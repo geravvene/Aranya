@@ -7,7 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "db:seed": "node --loader ts-node/esm prisma/seed.ts"
+    "db:seed": "node --loader ts-node/esm prisma/seed.ts",
+    "db:import-ww": "npx ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/import-ww-scraper.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.10.0",

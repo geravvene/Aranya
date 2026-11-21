@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db'
-import { getCategories, getProducts, usingFallback } from '@/lib/store'
+import { getCategories, getProducts, getMembers, getTransactions, usingFallback } from '@/lib/store'
 import StaffCMS from '@/components/StaffCMS'
 import { cookies } from 'next/headers'
 
@@ -12,10 +12,14 @@ export default async function StaffPage() {
 
   let categories = []
   let products = []
+  let members = []
+  let transactions = []
 
   if (usingFallback()) {
     categories = await getCategories()
     products = await getProducts()
+    members = await getMembers()
+    transactions = await getTransactions()
   } else {
     try {
       categories = await prisma.category.findMany({
@@ -25,10 +29,18 @@ export default async function StaffPage() {
         include: { category: true },
         orderBy: { createdAt: 'desc' }
       })
+      members = await prisma.member.findMany({
+        orderBy: { createdAt: 'desc' }
+      })
+      transactions = await prisma.transaction.findMany({
+        orderBy: { createdAt: 'desc' }
+      })
     } catch (error) {
       console.error('Database fetch error in staff portal:', error)
       categories = await getCategories()
       products = await getProducts()
+      members = await getMembers()
+      transactions = await getTransactions()
     }
   }
 
@@ -36,6 +48,8 @@ export default async function StaffPage() {
     <StaffCMS 
       categories={categories} 
       initialProducts={products} 
+      initialMembers={members as any}
+      initialTransactions={transactions as any}
       isAuthenticated={isAuthenticated} 
     />
   )

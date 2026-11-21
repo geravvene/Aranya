@@ -1,6 +1,41 @@
 // Offline / local-demo in-memory fallback used when DATABASE_URL is not configured.
 // This mirrors the seed data so the menu works immediately without a PostgreSQL instance.
 
+// ─── Weed Walker Legacy Types ───
+
+export interface FallbackMember {
+  id: string
+  name: string
+  channel: string | null
+  dob: string | null
+  phone: string | null
+  email: string | null
+  firstVisit: string | null
+  lastVisit: string | null
+  points: number
+  tier: string
+  notes: string | null
+  syncedAt: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface FallbackTransaction {
+  id: string
+  txDate: string
+  memberId: string | null
+  memberName: string
+  receiptNumber: string
+  status: string | null
+  amount: number
+  pointsEarned: number
+  txType: string | null
+  syncedAt: string
+  createdAt: Date
+}
+
+// ─── Menu Types ───
+
 export interface FallbackCategory {
   id: string
   slug: string
@@ -190,3 +225,9 @@ export const fallbackProducts: FallbackProduct[] = [
     updatedAt: new Date(),
   },
 ]
+
+// ─── Weed Walker Legacy Fallback Data ───
+
+export const fallbackMembers: FallbackMember[] = []
+
+export const fallbackTransactions: FallbackTransaction[] = []
