@@ -1,0 +1,55 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  nameEn    String
+  nameTh    String
+  order     Int       @default(0)
+  icon      String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  nameEn        String
+  nameTh        String
+  descriptionEn String?
+  descriptionTh String?
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  pricePerUnit  Float
+  unitType      String    @default("gram") // gram, piece, can, pre-roll
+  isAvailable   Boolean   @default(true)
+  stockGrams    Float?    @default(0.0)
+  thcPercent    Float?    @default(0.0)
+  cbdPercent    Float?    @default(0.0)
+  imageUrl      String?
+  cultivation   String?   // "Living Soil Organic", "Indoor Hydro", "Greenhouse"
+  
+  // Terpene Profile (0.0 to 5.0 scale)
+  myrcene       Float?    @default(0.0)
+  limonene      Float?    @default(0.0)
+  caryophyllene Float?    @default(0.0)
+  terpenesNote  String?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model StaffSession {
+  id        String   @id @default(cuid())
+  staffPin  String   // Hashed PIN
+  role      String   @default("counter_staff")
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}

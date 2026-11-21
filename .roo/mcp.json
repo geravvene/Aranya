@@ -1,0 +1,22 @@
+{
+	"mcpServers": {
+		"webresearch": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@mzxrai/mcp-webresearch"
+			],
+			"alwaysAllow": [
+				"search_google",
+				"visit_page"
+			]
+		},
+		"google-maps-platform-code-assist": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@googlemaps/code-assist-mcp@0.2.0"
+			]
+		}
+	}
+}

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full bg-[#0D1310] text-[#F9FBF9] antialiased selection:bg-[#10B981]/30 selection:text-[#10B981]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ARANYA Digital Menu & Lounge System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for Thai & English -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        obsidian: '#0D1310',
+                        surface: '#151E19',
+                        'surface-light': '#1C2922',
+                        border: '#22332A',
+                        jade: '#10B981',
+                        'jade-dark': '#059669',
+                        champagne: '#D4AF37',
+                        'champagne-dark': '#C5A059',
+                        sage: '#8E9F95',
+                        cream: '#F9FBF9',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans Thai', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(21, 30, 25, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(34, 51, 42, 0.8);
+        }
+        .glass-card {
+            background: rgba(28, 41, 34, 0.5);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(34, 51, 42, 0.6);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(16, 185, 129, 0.4);
+            box-shadow: 0 8px 32px -8px rgba(16, 185, 129, 0.15);
+        }
+        .ambient-glow {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, rgba(212, 175, 55, 0.03) 40%, rgba(0,0,0,0) 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0D1310; }
+        ::-webkit-scrollbar-thumb { background: #22332A; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #10B981; }
+    </style>
+</head>
+<body class="h-full bg-obsidian text-cream overflow-hidden font-sans">
+    <div id="root" class="h-full w-full"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const PRODUCTS_DATA = [
+            {
+                id: '1',
+                nameEN: 'Aranya Signature Kush',
+                nameTH: 'อรัญญากิฟท์ ซิกเนเจอร์',
+                category: 'living-soil',
+                thc: 28,
+                cbd: 1,
+                pricePerG: 550,
+                price35: 1800,
+                price7: 3400,
+                inStock: true,
+                stockGram: 142,
+                cultivation: 'Organic Living Soil',
+                harvestDate: '2026-10-15',
+                cureDays: 21,
+                lineage: 'OG Kush x Northern Lights #5',
+                image: 'https://images.unsplash.com/photo-1536431311719-398b6704d4cc?auto=format&fit=crop&w=800&q=80',
+                terpenes: [
+                    { name: 'Myrcene', nameTH: 'ไมร์ซีน', percent: 1.4, noteEN: 'Earthy / Herbal', noteTH: 'กลิ่นดิน / สมุนไพร', effectEN: 'Deep relaxation & physical ease', effectTH: 'ผ่อนคลายอย่างล้ำลึก' },
+                    { name: 'Limonene', nameTH: 'ลิโมนีน', percent: 0.8, noteEN: 'Citrus / Zest', noteTH: 'ส้ม / เลมอน', effectEN: 'Mood elevation & stress relief', effectTH: 'อารมณ์ดี ลดความเครียด' },
+                    { name: 'Caryophyllene', nameTH: 'คาริโอฟิลลีน', percent: 0.6, noteEN: 'Spicy / Pepper', noteTH: 'เครื่องเทศ / พริกไทย', effectEN: 'Anti-inflammatory balance', effectTH: 'ลดการอักเสบ ผ่อนคลาย' }
+                ],
+                flavors: ['Sweet Mango', 'Pine Wood', 'Fresh Mint']
+            },
+            {
+                id: '2',
+                nameEN: 'Thai Stick Heirloom Organic',
+                nameTH: 'ด้ายแดงไทยแลนด์ออร์แกนิค',
+                category: 'living-soil',
+                thc: 24,
+                cbd: 2,
+                pricePerG: 480,
+                price35: 1550,
+                price7: 2900,
+                inStock: true,
+                stockGram: 88,
+                cultivation: 'Organic Living Soil',
+                harvestDate: '2026-10-20',
+                cureDays: 28,
+                lineage: 'Isan Sativa Landrace Gen-3',
+                image: 'https://images.unsplash.com/photo-1603909223429-69bb7101f420?auto=format&fit=crop&w=800&q=80',
+                terpenes: [
+                    { name: 'Terpinolene', nameTH: 'เทอร์พิโนลีน', percent: 1.2, noteEN: 'Herbal / Citrus', noteTH: 'สมุนไพร / ส้ม', effectEN: 'Uplifting creative focus', effectTH: 'เพิ่มความคิดสร้างสรรค์' },
+                    { name: 'Pinene', nameTH: 'ไพน์นีน', percent: 0.9, noteEN: 'Pine Needle', noteTH: 'กลิ่นสน', effectEN: 'Mental clarity & alertness', effectTH: 'สมองปลอดโปร่ง' }
+                ],
+                flavors: ['Citrus Zest', 'Tropical Spice', 'Earthy Pine']
+            },
+            {
+                id: '3',
+                nameEN: 'Bangkok Haze Hydro',
+                nameTH: 'แบงค็อก เฮซ ไฮโดร',
+                category: 'indoor-hydro',
+                thc: 30,
+                cbd: 0.5,
+                pricePerG: 620,
+                price35: 2000,
+                price7: 3800,
+                inStock: false,
+                stockGram: 0,
+                cultivation: 'Indoor Hydroponics',
+                harvestDate: '2026-11-01',
+                cureDays: 14,
+                lineage: 'Super Silver Haze x Lemon Skunk',
+                image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80',
+                terpenes: [
+                    { name: 'Limonene', nameTH: 'ลิโมนีน', percent: 1.6, noteEN: 'Lemon Zest', noteTH: 'มะนาว', effectEN: 'Energetic euphoria', effectTH: 'กระปรี้กระเปร่า มีความสุข' }
+                ],
+                flavors: ['Sour Lemon', 'Diesel', 'Sweet Berries']
+            },
+            {
+                id: '4',
+                nameEN: 'Chiang Mai Organic CBD Tonic',
+                nameTH: 'เชียงใหม่ซีบีดี ออร์แกนิคโทนิค',
+                category: 'tea-bar',
+                thc: 0.2,
+                cbd: 15,
+                pricePerG: 320,
+                price35: 1000,
+                price7: 1900,
+                inStock: true,
+                stockGram: 210,
+                cultivation: 'Artisan Brew / Organic',
+                harvestDate: '2026-11-10',
+                cureDays: 7,
+                lineage: 'Charlotte Web Strain Infusion',
+                image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=800&q=80',
+                terpenes: [
+                    { name: 'Linalool', nameTH: 'ลินาโลออล', percent: 1.1, noteEN: 'Lavender / Floral', noteTH: 'ลาเวนเดอร์', effectEN: 'Calm & anxiety reduction', effectTH: 'ผ่อนคลาย ลดความวิตกกังวล' }
+                ],
+                flavors: ['Pandan Leaf', 'Honey Chamomile', 'Lemongrass']
+            }
+        ];
+
+        function App() {
+            const [lang, setLang] = React.useState('EN');
+            const [activeScreen, setActiveScreen] = React.useState('customer');
+            const [products, setProducts] = React.useState(PRODUCTS_DATA);
+            const [selectedCategory, setSelectedCategory] = React.useState('all');
+            const [searchQuery, setSearchQuery] = React.useState('');
+            const [selectedProduct, setSelectedProduct] = React.useState(null);
+            
+            const [isPinAuthenticated, setIsPinAuthenticated] = React.useState(false);
+            const [pinInput, setPinInput] = React.useState('');
+            const [pinError, setPinError] = React.useState(false);
+            const [showQrModal, setShowQrModal] = React.useState(false);
+            const [toastMessage, setToastMessage] = React.useState('');
+
+            const [editingPriceId, setEditingPriceId] = React.useState(null);
+            const [tempPrice, setTempPrice] = React.useState('');
+
+            React.useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, [activeScreen, selectedProduct, isPinAuthenticated, showQrModal, products, editingPriceId]);
+
+            const triggerToast = (msg) => {
+                setToastMessage(msg);
+                setTimeout(() => setToastMessage(''), 3000);
+            };
+
+            const toggleStock = (id) => {
+                setProducts(prev => prev.map(p => p.id === id ? { ...p, inStock: !p.inStock } : p));
+                const item = products.find(p => p.id === id);
+                triggerToast(lang === 'EN' ? `Status updated for ${item.nameEN}` : `อัปเดตสถานะ ${item.nameTH}`);
+            };
+
+            const savePrice = (id) => {
+                const num = parseFloat(tempPrice);
+                if (!isNaN(num) && num > 0) {
+                    setProducts(prev => prev.map(p => p.id === id ? { ...p, pricePerG: num } : p));
+                    triggerToast(lang === 'EN' ? '✓ Price updated successfully' : '✓ อัปเดตราคาเรียบร้อยแล้ว');
+                }
+                setEditingPriceId(null);
+            };
+
+            const handlePinKeyPress = (digit) => {
+                if (pinInput.length < 4) {
+                    const nextPin = pinInput + digit;
+                    setPinInput(nextPin);
+                    if (nextPin === '1234') {
+                        setIsPinAuthenticated(true);
+                        setPinInput('');
+                        setPinError(false);
+                    } else if (nextPin.length === 4) {
+                        setPinError(true);
+                        setTimeout(() => setPinInput(''), 600);
+                    }
+                }
+            };
+
+            const filteredProducts = products.filter(p => {
+                const matchesCat = selectedCategory === 'all' || p.category === selectedCategory;
+                const query = searchQuery.toLowerCase();
+                const matchesSearch = p.nameEN.toLowerCase().includes(query) || p.nameTH.toLowerCase().includes(query);
+                return matchesCat && matchesSearch;
+            });
+
+            return (
+                <div className="relative h-full w-full flex flex-col overflow-hidden bg-obsidian">
+                    <div className="ambient-glow -top-40 -left-40"></div>
+                    <div className="ambient-glow -bottom-40 -right-40"></div>
+
+                    {/* Persistent Top Switcher */}
+                    <header className="relative z-30 h-16 px-6 glass-panel flex items-center justify-between border-b border-border">
+                        <div className="flex items-center space-x-3">
+                            <div className="h-9 w-9 rounded-lg bg-jade/20 border border-jade/40 flex items-center justify-center text-jade">
+                                <i data-lucide="leaf" className="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h1 className="font-serif text-lg font-bold tracking-wider text-cream leading-tight">ARANYA</h1>
+                                <p className="text-[10px] tracking-widest uppercase text-sage">Botanical Lounge & Dispensary</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2 bg-obsidian/80 p-1.5 rounded-xl border border-border">
+                            <button 
+                                onClick={() => setActiveScreen('customer')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 ${activeScreen === 'customer' ? 'bg-jade text-obsidian font-semibold shadow-lg shadow-jade/20' : 'text-sage hover:text-cream'}`}
+                            >
+                                <i data-lucide="tablet" className="w-3.5 h-3.5"></i>
+                                <span>{lang === 'EN' ? '📱 Customer Menu' : '📱 เมนูลูกค้า'}</span>
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    if (products.length > 0) setSelectedProduct(products[0]);
+                                    setActiveScreen('detail');
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 ${activeScreen === 'detail' ? 'bg-jade text-obsidian font-semibold shadow-lg shadow-jade/20' : 'text-sage hover:text-cream'}`}
+                            >
+                                <i data-lucide="sparkles" className="w-3.5 h-3.5"></i>
+                                <span>{lang === 'EN' ? '🔍 Terpene Detail' : '🔍 รายละเอียดสายพันธุ์'}</span>
+                            </button>
+                            <button 
+                                onClick={() => setActiveScreen('cms')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 ${activeScreen === 'cms' ? 'bg-champagne text-obsidian font-semibold shadow-lg shadow-champagne/20' : 'text-sage hover:text-cream'}`}
+                            >
+                                <i data-lucide="lock" className="w-3.5 h-3.5"></i>
+                                <span>{lang === 'EN' ? '🔒 Staff CMS' : '🔒 การจัดการร้าน'}</span>
+                            </button>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                            <button 
+                                onClick={() => setShowQrModal(true)}
+                                className="h-9 px-3 rounded-lg glass-card text-xs text-cream flex items-center space-x-2 hover:border-jade/50 transition-colors"
+                            >
+                                <i data-lucide="qr-code" className="w-4 h-4 text-jade"></i>
+                                <span className="hidden sm:inline">{lang === 'EN' ? 'Scan to Mobile' : 'สแกนขึ้นมือถือ'}</span>
+                            </button>
+
+                            <button 
+                                onClick={() => setLang(l => l === 'EN' ? 'TH' : 'EN')}
+                                className="h-9 px-3 rounded-lg bg-surface-light border border-border text-xs font-semibold text-champagne hover:border-champagne/50 transition-colors flex items-center space-x-1.5"
+                            >
+                                <i data-lucide="globe" className="w-3.5 h-3.5"></i>
+                                <span>{lang === 'EN' ? 'TH ภาษาไทย' : 'EN English'}</span>
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* SCREEN 1: CUSTOMER MENU */}
+                    {activeScreen === 'customer' && (
+                        <div className="relative z-10 flex-1 flex overflow-hidden">
+                            <aside className="w-64 glass-panel border-r border-border p-4 flex flex-col justify-between">
+                                <div className="space-y-4">
+                                    <div className="relative">
+                                        <i data-lucide="search" className="w-4 h-4 absolute left-3 top-3 text-sage"></i>
+                                        <input 
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            placeholder={lang === 'EN' ? 'Search strains...' : 'ค้นหาสายพันธุ์...'}
+                                            className="w-full h-10 pl-9 pr-3 bg-obsidian/60 border border-border rounded-xl text-xs text-cream placeholder-sage focus:outline-none focus:border-jade"
+                                        />
+                                    </div>
+                                    <nav className="space-y-1">
+                                        {[
+                                            { id: 'all', en: 'All Strains', th: 'ทั้งหมด', count: products.length },
+                                            { id: 'living-soil', en: 'Living Soil Organic', th: 'ดินมีชีวิต', count: products.filter(p => p.category === 'living-soil').length },
+                                            { id: 'indoor-hydro', en: 'Indoor Hydro', th: 'ไฮโดรโพนิกส์', count: products.filter(p => p.category === 'indoor-hydro').length },
+                                            { id: 'tea-bar', en: 'Artisan Tea Bar', th: 'เครื่องดื่ม', count: products.filter(p => p.category === 'tea-bar').length },
+                                        ].map(cat => (
+                                            <button
+                                                key={cat.id}
+                                                onClick={() => setSelectedCategory(cat.id)}
+                                                className={`w-full h-11 px-3 rounded-xl text-xs font-medium flex items-center justify-between transition-all ${selectedCategory === cat.id ? 'bg-jade/15 border border-jade/40 text-jade font-semibold' : 'text-sage hover:bg-surface-light hover:text-cream'}`}
+                                            >
+                                                <span>{lang === 'EN' ? cat.en : cat.th}</span>
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] ${selectedCategory === cat.id ? 'bg-jade/20 text-jade' : 'bg-obsidian text-sage'}`}>{cat.count}</span>
+                                            </button>
+                                        ))}
+                                    </nav>
+                                </div>
+                                <div className="p-3 rounded-xl bg-surface-light border border-border text-[11px] text-sage flex items-start space-x-2">
+                                    <i data-lucide="shield-check" className="w-4 h-4 text-jade flex-shrink-0 mt-0.5"></i>
+                                    <span>{lang === 'EN' ? 'MOPH Compliant • Medical Grade • Bangkok Lounge' : 'ปฏิบัติตามข้อกำหนด MOPH • เกรดการแพทย์'}</span>
+                                </div>
+                            </aside>
+
+                            <main className="flex-1 p-6 overflow-y-auto">
+                                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+                                    {filteredProducts.map(p => (
+                                        <div 
+                                            key={p.id}
+                                            onClick={() => { setSelectedProduct(p); setActiveScreen('detail'); }}
+                                            className={`glass-card rounded-2xl overflow-hidden cursor-pointer flex flex-col justify-between group ${!p.inStock ? 'opacity-60 grayscale' : ''}`}
+                                        >
+                                            <div className="relative h-44 overflow-hidden bg-obsidian">
+                                                <img src={p.image} alt={p.nameEN} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent"></div>
+                                                <div className="absolute top-3 right-3">
+                                                    {p.inStock ? (
+                                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-jade/90 text-obsidian shadow-lg">AVAILABLE</span>
+                                                    ) : (
+                                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/80 text-white shadow-lg">OUT OF STOCK</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                                                <div>
+                                                    <h3 className="font-semibold text-sm text-cream group-hover:text-jade transition-colors leading-snug">{lang === 'EN' ? p.nameEN : p.nameTH}</h3>
+                                                    <p className="text-[11px] text-sage mt-0.5">{p.cultivation}</p>
+                                                </div>
+                                                <div className="flex items-center justify-between text-xs border-t border-border/60 pt-3">
+                                                    <div className="flex items-center space-x-2 text-[11px]">
+                                                        <span className="text-jade font-medium">THC {p.thc}%</span>
+                                                        <span className="text-sage">•</span>
+                                                        <span className="text-champagne font-medium">CBD {p.cbd}%</span>
+                                                    </div>
+                                                    <span className="font-bold text-sm text-champagne">฿{p.pricePerG} <span className="text-[10px] font-normal text-sage">/ g</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </main>
+                        </div>
+                    )}
+
+                    {/* SCREEN 2: PRODUCT DETAIL MODAL */}
+                    {activeScreen === 'detail' && selectedProduct && (
+                        <div className="relative z-20 flex-1 p-6 overflow-hidden flex items-center justify-center bg-obsidian/80 backdrop-blur-md">
+                            <div className="w-full max-w-5xl h-[90%] glass-panel rounded-3xl border border-border overflow-hidden flex flex-col md:flex-row shadow-2xl">
+                                <div className="w-full md:w-1/2 relative bg-obsidian p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-border">
+                                    <div className="relative h-64 md:h-full rounded-2xl overflow-hidden mb-4 border border-border/60">
+                                        <img src={selectedProduct.image} alt={selectedProduct.nameEN} className="w-full h-full object-cover" />
+                                        <div className="absolute bottom-3 left-3 right-3 p-3 glass-panel rounded-xl text-xs space-y-1">
+                                            <div className="flex justify-between text-sage">
+                                                <span>Cultivation:</span>
+                                                <span className="text-cream font-medium">{selectedProduct.cultivation}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sage">
+                                                <span>Cure Duration:</span>
+                                                <span className="text-jade font-medium">{selectedProduct.cureDays} Days Cold Cure</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => setActiveScreen('customer')}
+                                        className="h-11 w-full rounded-xl glass-card text-xs font-semibold text-cream flex items-center justify-center space-x-2 hover:bg-surface-light"
+                                    >
+                                        <i data-lucide="arrow-left" className="w-4 h-4"></i>
+                                        <span>{lang === 'EN' ? 'Back to Menu' : 'กลับสู่หน้าเมนู'}</span>
+                                    </button>
+                                </div>
+
+                                <div className="w-full md:w-1/2 p-6 flex flex-col justify-between overflow-y-auto space-y-6">
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-bold tracking-widest text-jade uppercase">{selectedProduct.cultivation}</span>
+                                            <span className="text-xs text-sage">Stock: <strong className="text-cream">{selectedProduct.stockGram}g</strong> counter</span>
+                                        </div>
+                                        <h2 className="text-2xl font-bold font-serif text-cream mt-1">{lang === 'EN' ? selectedProduct.nameEN : selectedProduct.nameTH}</h2>
+                                        <p className="text-xs text-sage italic mt-0.5">Lineage: {selectedProduct.lineage}</p>
+
+                                        <div className="grid grid-cols-3 gap-3 my-4">
+                                            <div className="p-3 rounded-xl bg-surface border border-border text-center">
+                                                <span className="text-[10px] text-sage block">1 Gram</span>
+                                                <span className="text-sm font-bold text-champagne">฿{selectedProduct.pricePerG}</span>
+                                            </div>
+                                            <div className="p-3 rounded-xl bg-surface border border-border text-center">
+                                                <span className="text-[10px] text-sage block">3.5 Grams</span>
+                                                <span className="text-sm font-bold text-champagne">฿{selectedProduct.price35}</span>
+                                            </div>
+                                            <div className="p-3 rounded-xl bg-surface border border-border text-center">
+                                                <span className="text-[10px] text-sage block">7 Grams</span>
+                                                <span className="text-sm font-bold text-champagne">฿{selectedProduct.price7}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <h4 className="text-xs font-semibold text-cream flex items-center space-x-1.5">
+                                                <i data-lucide="activity" className="w-3.5 h-3.5 text-jade"></i>
+                                                <span>Terpene Profile & Aromatherapy</span>
+                                            </h4>
+                                            {selectedProduct.terpenes.map((t, idx) => (
+                                                <div key={idx} className="space-y-1">
+                                                    <div className="flex justify-between text-xs">
+                                                        <span className="text-cream font-medium">{lang === 'EN' ? t.name : t.nameTH} ({t.percent}%)</span>
+                                                        <span className="text-sage text-[10px]">{lang === 'EN' ? t.effectEN : t.effectTH}</span>
+                                                    </div>
+                                                    <div className="h-2 w-full bg-obsidian rounded-full overflow-hidden border border-border">
+                                                        <div className="h-full bg-gradient-to-r from-jade to-champagne" style={{ width: `${t.percent * 40}%` }}></div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="mt-4">
+                                            <h4 className="text-xs font-semibold text-cream mb-2">Flavor & Fragrance Notes</h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedProduct.flavors.map((f, idx) => (
+                                                    <span key={idx} className="px-3 py-1 rounded-full text-[11px] bg-surface-light border border-border text-sage font-medium">{f}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-border flex items-center justify-between">
+                                        <button 
+                                            onClick={() => triggerToast(lang === 'EN' ? '🔔 Budtender notified to your table!' : '🔔 แจ้งเตือนพนักงานเรียบร้อยแล้ว!')}
+                                            className="h-12 px-6 rounded-xl bg-jade text-obsidian font-bold text-xs flex items-center space-x-2 shadow-lg shadow-jade/20 hover:bg-jade-dark transition-all"
+                                        >
+                                            <i data-lucide="bell" className="w-4 h-4"></i>
+                                            <span>{lang === 'EN' ? 'Ring Service Bell' : 'เรียกพนักงานบริการ'}</span>
+                                        </button>
+                                        <span className="text-[10px] text-sage max-w-[180px] text-right">In-store table consultation & weighing service</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* SCREEN 3: STAFF CMS PANEL */}
+                    {activeScreen === 'cms' && (
+                        <div className="relative z-10 flex-1 p-6 overflow-hidden flex items-center justify-center">
+                            {!isPinAuthenticated ? (
+                                <div className="w-full max-w-md glass-panel p-8 rounded-3xl border border-border text-center space-y-6">
+                                    <div>
+                                        <div className="h-12 w-12 rounded-2xl bg-champagne/15 border border-champagne/40 text-champagne mx-auto flex items-center justify-center mb-3">
+                                            <i data-lucide="lock" className="w-6 h-6"></i>
+                                        </div>
+                                        <h2 className="text-lg font-bold text-cream">Staff Fast CMS Gate</h2>
+                                        <p className="text-xs text-sage mt-1">Enter 4-digit PIN (Default: 1 2 3 4)</p>
+                                    </div>
+
+                                    <div className="flex justify-center space-x-3">
+                                        {[0, 1, 2, 3].map(i => (
+                                            <div key={i} className={`h-4 w-4 rounded-full border border-border transition-all ${pinInput.length > i ? 'bg-champagne border-champagne scale-110' : 'bg-obsidian'}`}></div>
+                                        ))}
+                                    </div>
+
+                                    {pinError && <p className="text-xs text-red-400">Incorrect PIN code. Try 1234</p>}
+
+                                    <div className="grid grid-cols-3 gap-3 max-w-[240px] mx-auto">
+                                        {['1','2','3','4','5','6','7','8','9','C','0','←'].map((btn, idx) => (
+                                            <button 
+                                                key={idx}
+                                                onClick={() => {
+                                                    if (btn === 'C') setPinInput('');
+                                                    else if (btn === '←') setPinInput(p => p.slice(0, -1));
+                                                    else handlePinKeyPress(btn);
+                                                }}
+                                                className="h-12 rounded-xl glass-card font-semibold text-sm text-cream hover:bg-surface-light flex items-center justify-center active:scale-95 transition-all"
+                                            >
+                                                {btn}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="w-full h-full glass-panel rounded-3xl border border-border p-6 flex flex-col space-y-4 overflow-hidden">
+                                    <div className="flex items-center justify-between border-b border-border pb-4">
+                                        <div>
+                                            <h2 className="text-lg font-bold text-cream">Live Inventory & Quick Pricing Control</h2>
+                                            <p className="text-xs text-sage">Changes take effect immediately on all customer tablets</p>
+                                        </div>
+                                        <button 
+                                            onClick={() => setIsPinAuthenticated(false)}
+                                            className="px-3 py-1.5 rounded-lg border border-border text-xs text-sage hover:text-cream"
+                                        >
+                                            Lock Screen
+                                        </button>
+                                    </div>
+
+                                    <div className="flex-1 overflow-y-auto">
+                                        <table className="w-full text-left text-xs text-sage">
+                                            <thead className="bg-obsidian/60 text-sage uppercase text-[10px] sticky top-0 border-b border-border">
+                                                <tr>
+                                                    <th className="p-3">Strain Name</th>
+                                                    <th className="p-3">Category</th>
+                                                    <th className="p-3">Price / Gram</th>
+                                                    <th className="p-3">Stock Status</th>
+                                                    <th className="p-3 text-right">Quick Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-border/60">
+                                                {products.map(p => (
+                                                    <tr key={p.id} className="hover:bg-surface-light/50 transition-colors">
+                                                        <td className="p-3 font-medium text-cream flex items-center space-x-3">
+                                                            <img src={p.image} className="w-8 h-8 rounded-lg object-cover" />
+                                                            <span>{p.nameEN}</span>
+                                                        </td>
+                                                        <td className="p-3 uppercase text-[10px]">{p.category}</td>
+                                                        <td className="p-3 font-semibold text-champagne">
+                                                            {editingPriceId === p.id ? (
+                                                                <div className="flex items-center space-x-1">
+                                                                    <input 
+                                                                        type="number"
+                                                                        value={tempPrice}
+                                                                        onChange={e => setTempPrice(e.target.value)}
+                                                                        className="w-16 h-7 bg-obsidian border border-jade rounded px-1 text-xs text-cream focus:outline-none"
+                                                                    />
+                                                                    <button onClick={() => savePrice(p.id)} className="text-jade p-1">✓</button>
+                                                                </div>
+                                                            ) : (
+                                                                <span 
+                                                                    onClick={() => { setEditingPriceId(p.id); setTempPrice(p.pricePerG.toString()); }}
+                                                                    className="cursor-pointer hover:underline"
+                                                                >
+                                                                    ฿{p.pricePerG}
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="p-3">
+                                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${p.inStock ? 'bg-jade/20 text-jade' : 'bg-red-500/20 text-red-400'}`}>
+                                                                {p.inStock ? 'In Stock' : 'Out of Stock'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="p-3 text-right">
+                                                            <button 
+                                                                onClick={() => toggleStock(p.id)}
+                                                                className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition-all ${p.inStock ? 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20' : 'bg-jade/10 text-jade border border-jade/30 hover:bg-jade/20'}`}
+                                                            >
+                                                                {p.inStock ? 'Mark Out of Stock' : 'Mark Available'}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* QR MODAL */}
+                    {showQrModal && (
+                        <div className="fixed inset-0 z-50 bg-obsidian/80 backdrop-blur-md flex items-center justify-center p-4">
+                            <div className="glass-panel p-6 rounded-3xl border border-border max-w-sm w-full text-center space-y-4">
+                                <h3 className="font-bold text-cream text-base">Open Menu on Mobile</h3>
+                                <div className="p-4 bg-white rounded-2xl inline-block mx-auto">
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://aranya-bangkok.com" alt="QR" className="w-40 h-40" />
+                                </div>
+                                <p className="text-xs text-sage">Scan with LINE OA or Camera to carry this digital menu on your phone.</p>
+                                <button 
+                                    onClick={() => setShowQrModal(false)}
+                                    className="w-full h-10 rounded-xl glass-card text-xs text-cream font-medium hover:bg-surface-light"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TOAST NOTIFICATION */}
+                    {toastMessage && (
+                        <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl bg-jade text-obsidian font-bold text-xs shadow-2xl flex items-center space-x-2 animate-bounce">
+                            <span>{toastMessage}</span>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
