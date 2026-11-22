@@ -1,9 +1,10 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { 
-  Search, Globe, QrCode, ShieldCheck, Sparkles, PhoneCall, 
-  CheckCircle2, X, Leaf, ChevronRight, Activity, Bell, ArrowLeft, Tablet, Lock
+import {
+  Search, Globe, QrCode, ShieldCheck, Sparkles, PhoneCall,
+  CheckCircle2, X, Leaf, ChevronRight, Activity, Bell, ArrowLeft, Tablet, Lock,
+  MessageCircle, ExternalLink, UserPlus
 } from 'lucide-react'
 
 interface Category {
@@ -154,7 +155,7 @@ export default function CustomerMenu({ categories, initialProducts }: CustomerMe
         </div>
 
         <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
-          <button 
+          <button
             onClick={() => setShowQRModal(true)}
             className="h-9 w-9 sm:w-auto sm:px-3 rounded-lg glass-card text-xs text-cream flex items-center justify-center sm:space-x-2 hover:border-jade/50 transition-colors"
             title="Scan to Mobile"
@@ -163,7 +164,17 @@ export default function CustomerMenu({ categories, initialProducts }: CustomerMe
             <span className="hidden lg:inline">{lang === 'EN' ? 'Scan to Mobile' : 'สแกนขึ้นมือถือ'}</span>
           </button>
 
-          <button 
+          {/* LINE Login Button */}
+          <a
+            href="/api/line/login"
+            className="h-9 w-9 sm:w-auto sm:px-3 rounded-lg glass-card text-xs text-cream flex items-center justify-center sm:space-x-2 hover:border-jade/50 transition-colors"
+            title="Login with LINE"
+          >
+            <MessageCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+            <span className="hidden lg:inline">LINE</span>
+          </a>
+
+          <button
             onClick={() => setLang(l => l === 'EN' ? 'TH' : 'EN')}
             className="h-9 px-2.5 sm:px-3 rounded-lg bg-surface-light border border-border text-[11px] sm:text-xs font-semibold text-champagne hover:border-champagne/50 transition-colors flex items-center space-x-1"
           >
@@ -262,7 +273,10 @@ export default function CustomerMenu({ categories, initialProducts }: CustomerMe
                 >
                   <div className="relative h-32 xs:h-36 sm:h-44 overflow-hidden bg-obsidian">
                     {p.imageUrl ? (
-                      <img src={p.imageUrl} alt={p.nameEn} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <>
+                        <img src={p.imageUrl} alt={p.nameEn} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }} />
+                        <div className="w-full h-full hidden flex items-center justify-center text-sage"><Leaf className="w-6 h-6 sm:w-8 sm:h-8" /></div>
+                      </>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-sage"><Leaf className="w-6 h-6 sm:w-8 sm:h-8" /></div>
                     )}
@@ -285,6 +299,16 @@ export default function CustomerMenu({ categories, initialProducts }: CustomerMe
                         <span className="text-jade font-medium">T:{p.thcPercent || 0}%</span>
                         <span className="text-sage font-bold sm:font-normal text-xs sm:text-base leading-none text-champagne">฿{p.pricePerUnit}</span>
                       </div>
+                      {/* Share to LINE */}
+                      <a
+                        href={`https://social-plug.line.me/lineit?url=${encodeURIComponent(`https://aranya-bangkok.com/product/${p.slug}`)}&text=${encodeURIComponent(`${lang === 'TH' ? p.nameTh : p.nameEn} — ARANYA Bangkok`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-7 w-7 rounded-lg bg-green-500/20 hover:bg-green-500/40 flex items-center justify-center transition-colors"
+                        title="Share to LINE"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5 text-green-500" />
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -302,7 +326,10 @@ export default function CustomerMenu({ categories, initialProducts }: CustomerMe
             <div className="w-full md:w-1/2 relative bg-obsidian p-4 sm:p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-border">
               <div className="relative h-48 sm:h-64 md:h-full min-h-[220px] rounded-2xl overflow-hidden mb-4 border border-border/60 bg-surface">
                 {selectedProduct.imageUrl ? (
-                  <img src={selectedProduct.imageUrl} alt={selectedProduct.nameEn} className="w-full h-full object-cover" />
+                  <>
+                    <img src={selectedProduct.imageUrl} alt={selectedProduct.nameEn} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }} />
+                    <div className="w-full h-full hidden flex items-center justify-center text-sage"><Leaf className="w-12 h-12" /></div>
+                  </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-sage"><Leaf className="w-12 h-12" /></div>
                 )}
@@ -388,34 +415,70 @@ export default function CustomerMenu({ categories, initialProducts }: CustomerMe
               </div>
 
               <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
-                <button 
+                <button
                   onClick={() => triggerToast(lang === 'EN' ? '🔔 Budtender notified to your table!' : '🔔 แจ้งเตือนพนักงานเรียบร้อยแล้ว!')}
                   className="w-full sm:w-auto h-11 px-5 rounded-xl bg-jade text-obsidian font-bold text-xs flex items-center justify-center space-x-2 shadow-lg shadow-jade/20 hover:bg-jade-dark transition-all"
                 >
                   <Bell className="w-4 h-4" />
                   <span>{lang === 'EN' ? 'Ring Service Bell' : 'เรียกพนักงานบริการ'}</span>
                 </button>
-                <span className="text-[10px] text-sage text-center sm:text-right">In-store table consultation</span>
+                <div className="flex items-center gap-2">
+                  {/* Share to LINE */}
+                  <a
+                    href={`https://social-plug.line.me/lineit?url=${encodeURIComponent(`https://aranya-bangkok.com/product/${selectedProduct.slug}`)}&text=${encodeURIComponent(`${lang === 'TH' ? selectedProduct.nameTh : selectedProduct.nameEn} — ARANYA Bangkok`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-10 px-4 rounded-xl bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 text-green-400 text-xs font-medium flex items-center justify-center space-x-1.5 transition-all"
+                    title="Share to LINE"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>{lang === 'EN' ? 'Share to LINE' : 'แชร์ไป LINE'}</span>
+                  </a>
+                  <span className="text-[10px] text-sage text-center sm:text-right">In-store table consultation</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* QR MODAL */}
+      {/* QR MODAL — LINE OA */}
       {showQRModal && (
         <div className="fixed inset-0 z-50 bg-obsidian/85 backdrop-blur-md flex items-center justify-center p-4">
           <div className="glass-panel p-6 rounded-3xl border border-border max-w-sm w-full text-center space-y-4 shadow-2xl">
-            <h3 className="font-bold text-cream text-base">Open Menu on Mobile</h3>
-            <div className="p-4 bg-white rounded-2xl inline-block mx-auto">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://aranya-bangkok.com" alt="QR" className="w-40 h-40" />
+            <div className="w-14 h-14 rounded-2xl bg-green-500/15 border border-green-500/30 flex items-center justify-center mx-auto mb-2">
+              <MessageCircle className="w-7 h-7 text-green-500" />
             </div>
-            <p className="text-xs text-sage">Scan with camera to carry this digital menu on your phone.</p>
-            <button 
+            <h3 className="font-bold text-cream text-base">{lang === 'EN' ? 'Scan to Mobile (LINE OA)' : 'สแกนผ่านมือถือ (LINE OA)'}</h3>
+            
+            {/* LINE OA QR Code */}
+            <div className="p-3 bg-white rounded-2xl inline-block mx-auto">
+              <img
+                src={process.env.NEXT_PUBLIC_LINE_OA_QR_URL || 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://aranya-bangkok.com'}
+                alt="LINE OA QR"
+                className="w-40 h-40"
+                onError={(e) => { (e.target as HTMLImageElement).src = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://aranya-bangkok.com' }}
+              />
+            </div>
+            
+            <p className="text-xs text-sage">{lang === 'EN' ? 'Scan this QR code with your LINE app to add ARANYA as a friend and access our digital menu.' : 'สแกนคิวอาร์โค้ดนี้ด้วยแอป LINE เพื่อเพิ่ม ARANYA เป็นเพื่อนและเข้าถึงเมนูดิจิทัลของเรา'}</p>
+            
+            {/* Add LINE OA Friend Button */}
+            <a
+              href={process.env.NEXT_PUBLIC_LINE_OA_QR_URL || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full h-11 rounded-xl bg-green-500 text-white font-bold text-xs flex items-center justify-center space-x-2 hover:bg-green-600 transition-all shadow-lg"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>{lang === 'EN' ? 'Add LINE OA Friend' : 'เพิ่มเพื่อน LINE OA'}</span>
+            </a>
+
+            <button
               onClick={() => setShowQRModal(false)}
               className="w-full h-10 rounded-xl glass-card text-xs text-cream font-medium hover:bg-surface-light"
             >
-              Close
+              {lang === 'EN' ? 'Close' : 'ปิด'}
             </button>
           </div>
         </div>
