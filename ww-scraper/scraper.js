@@ -1,5 +1,7 @@
 /**
  * WeedWalker — Silompos Scraper v2
+ * Прямая запись в PostgreSQL через Prisma (если доступен),
+ * иначе fallback в JSON-файлы.
  */
 
 const { chromium } = require('playwright')
@@ -13,6 +15,19 @@ const DATA_DIR = path.join(__dirname, 'data')
 const MEMBERS_FILE = path.join(DATA_DIR, 'members.json')
 const TRANSACTIONS_FILE = path.join(DATA_DIR, 'transactions.json')
 const LOG_FILE = path.join(DATA_DIR, 'sync_log.json')
+
+// ─── Prisma Client (опционально) ───
+let prisma = null
+let prismaAvailable = false
+try {
+  const PrismaClient = require(path.join(__dirname, '..', 'node_modules', '@prisma', 'client')).PrismaClient
+  if (process.env.DATABASE_URL) {
+    prisma = new PrismaClient()
+    prismaAvailable = true
+  }
+} catch (e) {
+  // Prisma Client не установлен или не сгенерирован — работаем через JSON
+}
 
 const URLS = {
   memberList:   'https://dashboard.silompos.com/member/data',
@@ -37,6 +52,92 @@ function saveLog(type, status, count, message) {
   const logs = loadJSON(LOG_FILE)
   logs.unshift({ type, status, count, message, synced_at: new Date().toISOString() })
   saveJSON(LOG_FILE, logs.slice(0, 100))
+}
+
+// ─── Прямая запись в PostgreSQL через Prisma ───
+
+async function saveToDatabase(members, transactions) {
+  if (!prismaAvailable || !prisma) {
+    log('ℹ️  Prisma Client недоступен — данные сохранены только в JSON', 'info')
+    return false
+  }
+
+  log('📦 Прямая запись в PostgreSQL...', 'info')
+  let memberCount = 0
+  let txCount = 0
+
+  for (const m of members) {
+    const phone = m.phone || undefined
+    const data = {
+      name: m.name || 'Unknown',
+      channel: m.channel || null,
+      dob: m.dob || null,
+      phone: phone || null,
+      email: m.email || null,
+      firstVisit: m.first_visit ? new Date(m.first_visit) : null,
+      lastVisit: m.last_visit ? new Date(m.last_visit) : null,
+      points: m.points || 0,
+      tier: m.tier || 'bronze',
+      notes: m.notes || null,
+      syncedAt: m.synced_at ? new Date(m.synced_at) : new Date(),
+    }
+
+    try {
+      if (phone) {
+        const existing = await prisma.member.findUnique({ where: { phone } })
+        if (existing) {
+          await prisma.member.update({ where: { phone }, data })
+        } else {
+          await prisma.member.create({ data: { ...data, phone } })
+        }
+      } else {
+        await prisma.member.create({ data })
+      }
+      memberCount++
+    } catch (e) {
+      log(`   ⚠ Ошибка записи участника ${m.name}: ${e.message}`, 'warn')
+    }
+  }
+
+  for (const t of transactions) {
+    const receiptNumber = t.receipt_number
+    if (!receiptNumber) continue
+
+    let memberId = null
+    if (t.member_name) {
+      try {
+        const member = await prisma.member.findFirst({ where: { name: t.member_name } })
+        if (member) memberId = member.id
+      } catch {}
+    }
+
+    const data = {
+      txDate: t.tx_date ? new Date(t.tx_date) : new Date(),
+      memberId,
+      memberName: t.member_name || 'Walk-in',
+      receiptNumber,
+      status: t.status || 'completed',
+      amount: t.amount || 0,
+      pointsEarned: t.points_earned || 0,
+      txType: t.tx_type || 'sale',
+      syncedAt: t.synced_at ? new Date(t.synced_at) : new Date(),
+    }
+
+    try {
+      const existing = await prisma.transaction.findUnique({ where: { receiptNumber } })
+      if (existing) {
+        await prisma.transaction.update({ where: { receiptNumber }, data })
+      } else {
+        await prisma.transaction.create({ data })
+      }
+      txCount++
+    } catch (e) {
+      log(`   ⚠ Ошибка записи транзакции ${receiptNumber}: ${e.message}`, 'warn')
+    }
+  }
+
+  log(`✅ Записано в PostgreSQL: ${memberCount} участников, ${txCount} транзакций`, 'ok')
+  return true
 }
 
 async function isLoggedIn(page) {
@@ -203,7 +304,10 @@ async function scrapeTransactions(page) {
 
 let isRunning = false
 
-async function runSync() {
+/**
+ * @param {{ once?: boolean }} [opts]
+ */
+async function runSync(opts = {}) {
   if (isRunning) { log('⚠ กำลัง sync อยู่ ข้ามรอบนี้', 'warn'); return }
   isRunning = true
   log('🚀 เริ่ม Sync...', 'info')
@@ -240,9 +344,12 @@ async function runSync() {
     const txs = loadJSON(TRANSACTIONS_FILE)
     log('', 'info')
     log('📊 สรุป:', 'ok')
-    log(`   สมาชิก: ${members.length} คน`, 'ok')
-    log(`   Transaction: ${txs.length} รายการ`, 'ok')
-    log(`   Sync ต่อไป: 1 ชั่วโมง`, 'info')
+    log(`   Собрано: ${members.length} участников, ${txs.length} транзакций`, 'ok')
+
+    // Прямая запись в PostgreSQL (если Prisma доступен)
+    await saveToDatabase(members, txs)
+
+    log(`   Следующий sync: 1 час`, 'info')
 
   } catch (err) {
     log(`❌ ${err.message}`, 'error')
@@ -253,12 +360,34 @@ async function runSync() {
   }
 }
 
-console.clear()
-log('================================', 'info')
-log('  WEED WALKER — Silompos Scraper v2', 'warn')
-log('  sync ทุก 1 ชั่วโมง', 'warn')
-log(`  ข้อมูลเก็บที่: ${DATA_DIR}`, 'info')
-log('================================', 'info')
+// ─── CLI entry ───
 
-runSync()
-cron.schedule('0 * * * *', () => { log('⏰ Cron — เริ่ม sync', 'info'); runSync() })
+const args = process.argv.slice(1)
+const isOnce = args.includes('--once')
+
+if (isOnce) {
+  // Один проход без cron, затем выход
+  // Код возврата: 0 — успешно, 1 — ошибка
+  runSync({ once: true })
+    .then(() => {
+      // runSync не пробрасывает ошибки наружу, проверяем sync_log
+      const logs = loadJSON(LOG_FILE)
+      const last = logs[0]
+      if (last && last.status === 'error') {
+        process.exit(1)
+      }
+      process.exit(0)
+    })
+    .catch(e => { console.error('Fatal:', e); process.exit(1) })
+} else {
+  // Обычный режим: sync + cron каждый час
+  console.clear()
+  log('================================', 'info')
+  log('  WEED WALKER — Silompos Scraper v2', 'warn')
+  log('  sync ทุก 1 ชั่วโมง', 'warn')
+  log(`  ข้อมูลเก็บที่: ${DATA_DIR}`, 'info')
+  log('================================', 'info')
+
+  runSync()
+  cron.schedule('0 * * * *', () => { log('⏰ Cron — เริ่ม sync', 'info'); runSync() })
+}

@@ -3,6 +3,13 @@
     "type": "sync",
     "status": "error",
     "count": 0,
+    "message": "browserType.launchPersistentContext: Executable doesn't exist at C:\\Users\\roman\\AppData\\Local\\ms-playwright\\chromium-1228\\chrome-win64\\chrome.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝",
+    "synced_at": "2026-11-21T10:33:02.017Z"
+  },
+  {
+    "type": "sync",
+    "status": "error",
+    "count": 0,
     "message": "page.goto: Page crashed\nCall log:\n\u001b[2m  - navigating to \"https://crm.silompos.com/transaction/history\", waiting until \"networkidle\"\u001b[22m\n",
     "synced_at": "2026-06-25T06:05:15.347Z"
   },
